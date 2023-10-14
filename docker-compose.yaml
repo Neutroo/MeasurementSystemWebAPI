@@ -1,5 +1,6 @@
 services:
   web-api:
+    container_name: web-api
     image: web-api
     build: 
       dockerfile: MeasurementSystemWebAPI/Dockerfile
@@ -8,6 +9,7 @@ services:
     depends_on:
       - influxdb
   influxdb:
+    container_name: influxdb
     image: influxdb:latest
     ports:
       - '8086:8086'
