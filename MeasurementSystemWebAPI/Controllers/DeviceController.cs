@@ -20,7 +20,7 @@ namespace MeasurementSystemWebAPI.Controllers
         public DeviceController(ILogger<DeviceController> logger)
         {
             _logger = logger;
-            influxDBClient = new("http://localhost:8086", token);
+            influxDBClient = new("http://influxdb:8086", token);
         }
 
         [HttpGet]
