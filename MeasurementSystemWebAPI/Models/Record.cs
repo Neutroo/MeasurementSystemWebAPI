@@ -1,7 +1,6 @@
-using Newtonsoft.Json;
-using System.ComponentModel.DataAnnotations;
+﻿using Newtonsoft.Json;
 
-namespace MeasurementSystemWebAPI
+namespace MeasurementSystemWebAPI.Models
 {
     public class Record
     {
@@ -14,13 +13,5 @@ namespace MeasurementSystemWebAPI
             Time = time;
             Fields = fields;
         }
-    }
-
-    public class Device
-    {
-        [Required]
-        public string? Name { get; set; }
-        [Required]
-        public List<Record> Records { get; set; } = new List<Record>();
     }
 }

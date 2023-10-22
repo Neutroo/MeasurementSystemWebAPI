@@ -1,6 +1,7 @@
 using InfluxDB.Client;
 using InfluxDB.Client.Api.Domain;
 using InfluxDB.Client.Writes;
+using MeasurementSystemWebAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Dynamic;
@@ -53,16 +54,18 @@ namespace MeasurementSystemWebAPI.Controllers
 
             List<Device> devices = new();
 
-            foreach (var h in data)
+            foreach (var pair in data)
             {
                 List<Record> records = new();
-                foreach (var r in h.Value)
+
+                foreach (var record in pair.Value)
                 {
-                    records.Add(new Record(r.Key, r.Value));
+                    records.Add(new Record(record.Key, record.Value));
                 }
+
                 devices.Add(new Device()
                 {
-                    Name = h.Key,
+                    Name = pair.Key,
                     Records = records
                 });
             }
@@ -71,13 +74,13 @@ namespace MeasurementSystemWebAPI.Controllers
         }
 
         [HttpPost]
-        public string PostWeatherForecast(object json)
+        public IActionResult PostWeatherForecast(object json)
         {
             Console.WriteLine("post");
 
             if (json == null)
             {
-                return "Empty json";
+                return BadRequest();
             }
 
             JsonTextReader reader = new(new StringReader(json.ToString()));
@@ -117,7 +120,7 @@ namespace MeasurementSystemWebAPI.Controllers
             string result = JsonConvert.SerializeObject(keyValuePairs);
             Console.WriteLine(result);
 
-            return result;
+            return Ok();
         }
     }
 }
