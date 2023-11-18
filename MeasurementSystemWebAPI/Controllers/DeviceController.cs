@@ -80,7 +80,7 @@ namespace MeasurementSystemWebAPI.Controllers
 
             if (json == null)
             {
-                return BadRequest();
+                return BadRequest("Empty json");
             }
 
             JsonTextReader reader = new(new StringReader(json.ToString()));
@@ -97,12 +97,37 @@ namespace MeasurementSystemWebAPI.Controllers
                     {
                         string propertyName = reader.Value.ToString();
                         reader.Read();
-                        keyValuePairs.Add($"{nodeName}_{propertyName}", reader.Value.ToString());
+
+                        if (reader.Value != null && reader.TokenType != JsonToken.StartObject)
+                        {
+                            keyValuePairs.Add($"{nodeName}_{propertyName}", reader.Value.ToString());
+                        }
+                        else
+                        {
+                            while (reader.Read() && reader.TokenType != JsonToken.EndObject)
+                            {
+                                string additionalProperty = reader.Value.ToString();
+                                reader.Read();
+
+                                if (reader.Value != null && reader.TokenType != JsonToken.StartObject)
+                                {
+                                    keyValuePairs.Add($"{nodeName}_{propertyName}_{additionalProperty}", reader.Value.ToString());
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            var point = PointData.Measurement("DeviceName");
+            if (!keyValuePairs.ContainsKey("system_Akey"))
+            {
+                return BadRequest("No authentication key");              
+            }
+
+            var authKey = keyValuePairs["system_Akey"];
+            keyValuePairs.Remove("system_Akey");
+
+            var point = PointData.Measurement(authKey);
 
             foreach (var pair in keyValuePairs)
             {
