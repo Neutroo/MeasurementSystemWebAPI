@@ -25,11 +25,17 @@ namespace MeasurementSystemWebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Device>> GetWeatherForecastAsync()
+        public async Task<IEnumerable<Device>?> GetWeatherForecastAsync(DateTime from, DateTime to)
         {
             Console.WriteLine("get");
 
-            var query = "from(bucket: \"measurements-bucket\") |> range(start: 0)";
+            if (from > to)
+            {
+                return null;
+            }
+
+            var query = $"from(bucket: \"measurements-bucket\") |> range(start: {from.Subtract(DateTime.UnixEpoch).TotalSeconds}, " +
+                $"stop: {to.Subtract(DateTime.UnixEpoch).TotalSeconds})";
             var tables = await influxDBClient.GetQueryApi().QueryAsync(query, org);
 
             Dictionary<string, Dictionary<DateTime, IDictionary<string, object>>> data = new();
@@ -37,7 +43,7 @@ namespace MeasurementSystemWebAPI.Controllers
             foreach (var table in tables)
             {
                 foreach (var record in table.Records)
-                {                   
+                {
                     var measurement = record.Values["_measurement"].ToString();
                     var time = record.Values["_time"];
                     var utcTime = DateTime.Parse(time.ToString()).AddHours(3);
@@ -48,7 +54,7 @@ namespace MeasurementSystemWebAPI.Controllers
 
                     data[measurement].TryAdd(utcTime, new ExpandoObject());
 
-                    data[measurement][utcTime].Add(field, value);                   
+                    data[measurement][utcTime].Add(field, value);
                 }
             }
 
