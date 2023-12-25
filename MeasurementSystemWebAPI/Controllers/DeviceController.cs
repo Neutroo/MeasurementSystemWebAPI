@@ -25,13 +25,18 @@ namespace MeasurementSystemWebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<IEnumerable<Device>?> GetWeatherForecastAsync(DateTime from, DateTime to)
+        public async Task<ActionResult<IEnumerable<Device>?>> GetWeatherForecastAsync(DateTime from, DateTime to)
         {
             Console.WriteLine("get");
 
+            if (!Request.QueryString.HasValue)
+            {
+                return BadRequest("No query string");
+            }
+
             if (from > to)
             {
-                return null;
+                return BadRequest("Start time cannot be greater than end time");
             }
 
             var query = $"from(bucket: \"measurements-bucket\") |> range(start: {from.Subtract(DateTime.UnixEpoch).TotalSeconds}, " +
