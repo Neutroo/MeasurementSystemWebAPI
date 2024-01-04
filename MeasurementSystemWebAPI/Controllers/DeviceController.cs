@@ -25,7 +25,7 @@ namespace MeasurementSystemWebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Device>?>> GetWeatherForecastAsync(DateTime from, DateTime to)
+        public async Task<ActionResult<string>> GetWeatherForecastAsync(DateTime from, DateTime to)
         {
             Console.WriteLine("get");
 
@@ -63,7 +63,7 @@ namespace MeasurementSystemWebAPI.Controllers
                 }
             }
 
-            List<Device> devices = new();
+            Dictionary<string, List<Record>> devices = new(); 
 
             foreach (var pair in data)
             {
@@ -74,14 +74,10 @@ namespace MeasurementSystemWebAPI.Controllers
                     records.Add(new Record(record.Key, record.Value));
                 }
 
-                devices.Add(new Device()
-                {
-                    Name = pair.Key,
-                    Records = records
-                });
+                devices.TryAdd(pair.Key, records);
             }
 
-            return devices;
+            return JsonConvert.SerializeObject(devices);
         }
 
         [HttpPost]
