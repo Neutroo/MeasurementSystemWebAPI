@@ -4,6 +4,7 @@ using InfluxDB.Client.Writes;
 using MeasurementSystemWebAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using System.Collections.Concurrent;
 using System.Dynamic;
 
 namespace MeasurementSystemWebAPI.Controllers
@@ -43,9 +44,9 @@ namespace MeasurementSystemWebAPI.Controllers
                 $"stop: {to.Subtract(DateTime.UnixEpoch).TotalSeconds})";
             var tables = await influxDBClient.GetQueryApi().QueryAsync(query, org);
 
-            Dictionary<string, Dictionary<DateTime, IDictionary<string, object>>> data = new();
+            ConcurrentDictionary<string, ConcurrentDictionary<DateTime, IDictionary<string, object>>> data = new();
 
-            foreach (var table in tables)
+            Parallel.ForEach(tables, table =>
             {
                 foreach (var record in table.Records)
                 {
@@ -55,17 +56,17 @@ namespace MeasurementSystemWebAPI.Controllers
                     var field = record.Values["_field"].ToString();
                     var value = record.Values["_value"];
 
-                    data.TryAdd(measurement, new Dictionary<DateTime, IDictionary<string, object>>());
+                    data.TryAdd(measurement, new ConcurrentDictionary<DateTime, IDictionary<string, object>>());
 
                     data[measurement].TryAdd(utcTime, new ExpandoObject());
 
                     data[measurement][utcTime].Add(field, value);
                 }
-            }
+            });
 
-            Dictionary<string, List<Record>> devices = new(); 
+            ConcurrentDictionary<string, List<Record>> devices = new();
 
-            foreach (var pair in data)
+            Parallel.ForEach(data, pair =>
             {
                 List<Record> records = new();
 
@@ -75,7 +76,7 @@ namespace MeasurementSystemWebAPI.Controllers
                 }
 
                 devices.TryAdd(pair.Key, records);
-            }
+            });
 
             return JsonConvert.SerializeObject(devices);
         }
